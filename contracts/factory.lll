@@ -1,7 +1,6 @@
 ;;;; ==========================================================================
-;;;; @title Lovely Little Greeter
+;;;; @title Factory: a contract that creates other contracts
 ;;;; @author Noel Maersk <veox>
-;;;; WARNING: untested!
 
 (seq
   ;; ==========================================================================
@@ -22,6 +21,9 @@
   (def '*greet*        0xcfae3217) ; greet()
   (def '*greeting*     0xef690cc0) ; greeting(): public storage in Solidity
   (def '*set-greeting* 0xb2010978) ; setGreeting(string)
+
+  ;; the most important product of any factory is compliant workers
+  (def '*stamp*        0xc85e07b9) ; stamp()
 
   ;; ==========================================================================
   ;; STDLIB
@@ -70,32 +72,39 @@
   ;; ==========================================================================
   ;; INIT
 
-  (seq
-    unpayable
-    (sstore *storloc-greeting* *initial-greeting*))
-
   ;; ==========================================================================
   ;; CODE
 
-  (returnlll
+  (returnlll                   ; this factory will have code...
    (seq
      unpayable
      mstore-function-selector
 
-     ;; change greeting value in storage
-     (def 'new-greeting (calldataload 0x04))
-     (function *set-greeting*
-               (seq
-                 (sstore *storloc-greeting* new-greeting)
-                 (stop)))
+     (function *stamp*
+               (create                   ; ...that creates greeters...
+                (seq
+                  (sstore *storloc-greeting* *initial-greeting*)
 
-     ;; return greeting value from storage
-     (function *greet*
-               (return (sload *storloc-greeting*)))
+                  (returnlll             ; ...with the following code
+                   (seq
+                     unpayable
+                     mstore-function-selector
 
-     ;; for compatibility with Greeter.sol: "public storage variable"
-     (function *greeting*
-               (return (sload *storloc-greeting*)))
+                     ;; change greeting value in storage
+                     (def 'new-greeting (calldataload 0x04))
+                     (function *set-greeting*
+                               (seq
+                                 (sstore *storloc-greeting* new-greeting)
+                                 (stop)))
 
-     ;; fallback
-     (panic))))
+                     ;; return greeting value from storage
+                     (function *greet*
+                               (return (sload *storloc-greeting*)))
+
+                     ;; for compatibility with Greeter.sol: "public storage variable"
+                     (function *greeting*
+                               (return (sload *storloc-greeting*)))
+
+                     ;; fallback
+                     (panic)))))
+               ))))
