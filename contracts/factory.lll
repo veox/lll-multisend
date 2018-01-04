@@ -7,6 +7,7 @@
   ;; MEMORY LAYOUT
 
   (def '*memloc-function-selector* 0x20)
+  (def '*memloc-scratchpad*        0x40)
 
   ;; ==========================================================================
   ;; STORAGE LAYOUT
@@ -24,6 +25,9 @@
 
   ;; the most important product of any factory is compliant workers
   (def '*stamp*        0xc85e07b9) ; stamp()
+
+  (def '*stamped*                  ; stamped(address,address)
+       0x9f0f13e03835c7dcca2675cb51976e07bd186b2e351cefe0db24ec0fe62105ef)
 
   ;; ==========================================================================
   ;; STDLIB
@@ -48,6 +52,15 @@
   (def 'mstore-function-selector
        (mstore *memloc-function-selector*
                (shift-right (calldataload 0x00))))
+
+  ;; --------------------------------------------------------------------------
+  ;; @author Ben Edgington <benjaminion>, Noel Maersk <veox>
+  ;; @notice Convenience macro for emitting events.
+
+  (def 'emit3 (id indexed0 indexed1 data)
+       (seq
+         (mstore *memloc-scratchpad* data)
+         (log3 *memloc-scratchpad* 0x20 id indexed0 indexed1)))
 
   ;; --------------------------------------------------------------------------
   ;; @author Daniel Ellison <zigguratt>
@@ -75,36 +88,41 @@
   ;; ==========================================================================
   ;; CODE
 
-  (returnlll                   ; this factory will have code...
+  (returnlll                    ; this factory will have code...
    (seq
      unpayable
      mstore-function-selector
 
      (function *stamp*
-               (create                   ; ...that creates greeters...
-                (seq
-                  (sstore *storloc-greeting* *initial-greeting*)
-
-                  (returnlll             ; ...with the following code
+               (seq
+                 (emit3
+                  *stamped*
+                  (caller)
+                  (create       ; ...that creates greeters...
                    (seq
-                     unpayable
-                     mstore-function-selector
+                     (sstore *storloc-greeting* *initial-greeting*)
 
-                     ;; change greeting value in storage
-                     (def 'new-greeting (calldataload 0x04))
-                     (function *set-greeting*
-                               (seq
-                                 (sstore *storloc-greeting* new-greeting)
-                                 (stop)))
+                     (returnlll ; ...with the following code
+                      (seq
+                        unpayable
+                        mstore-function-selector
 
-                     ;; return greeting value from storage
-                     (function *greet*
-                               (return (sload *storloc-greeting*)))
+                        ;; change greeting value in storage
+                        (def 'new-greeting (calldataload 0x04))
+                        (function *set-greeting*
+                                  (seq
+                                    (sstore *storloc-greeting* new-greeting)
+                                    (stop)))
 
-                     ;; for compatibility with Greeter.sol: "public storage variable"
-                     (function *greeting*
-                               (return (sload *storloc-greeting*)))
+                        ;; return greeting value from storage
+                        (function *greet*
+                                  (return (sload *storloc-greeting*)))
 
-                     ;; fallback
-                     (panic)))))
-               ))))
+                        ;; for compatibility with Greeter.sol: "public storage variable"
+                        (function *greeting*
+                                  (return (sload *storloc-greeting*)))
+
+                        ;; fallback
+                        (panic)))))
+                  0x0) ; emit3 data (none)
+                 )))))
