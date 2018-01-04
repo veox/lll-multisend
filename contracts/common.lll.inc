@@ -30,13 +30,18 @@
                (shift-right (calldataload 0x00))))
 
   ;; --------------------------------------------------------------------------
-  ;; @author Ben Edgington <benjaminion>, Noel Maersk <veox>
-  ;; @notice Convenience macro for emitting events.
+  ;; @author Just about everybody.
+  ;; @notice Convenience macro for emitting events with 1 indexed chunk.
+  ;; @dev Currently does not support data longer than 32 bytes total.
+  ;; @param id 32-byte event identifier.
+  ;; @param indexed Data chunk that will also be indexed by in logs.
+  ;; @param data Non-indexed data to be placed in logs.
+  ;; @param datasize Number of bytes in data.
 
-  (def 'emit3 (id indexed0 indexed1 data)
+  (def 'emit1 (id indexed data datasize)
        (seq
          (mstore *memloc-scratchpad* data)
-         (log3 *memloc-scratchpad* 0x20 id indexed0 indexed1)))
+         (log2 *memloc-scratchpad* datasize id indexed)))
 
   ;; --------------------------------------------------------------------------
   ;; @author Daniel Ellison <zigguratt>

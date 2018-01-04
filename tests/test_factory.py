@@ -1,11 +1,15 @@
 def get_greeter_addr_from_log(chain, receipt):
-    logtopic = receipt['logs'][0]['topics'][2]
+    logtopic = receipt['logs'][0]['data']
+    assert logtopic != '0x0000000000000000000000000000000000000000000000000000000000000000'
+
     addr = chain.web3.toChecksumAddress(logtopic)
     return addr
 
 def create_greeter(chain, factory):
     txhash = factory.transact().stamp()
     txreceipt = chain.wait.for_receipt(txhash)
+
+    print(txreceipt) # DEBUG
 
     greeteraddr = get_greeter_addr_from_log(chain, txreceipt)
 

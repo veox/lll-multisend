@@ -22,11 +22,14 @@
   ;; the most important product of any factory is compliant workers
   (def '*stamp*        0xc85e07b9) ; stamp()
 
-  (def '*stamped*                  ; stamped(address,address)
+  ; TODO: find out if un/indexed args change the ID
+  (def '*event-stamped*            ; stamped(address,address)
        0x9f0f13e03835c7dcca2675cb51976e07bd186b2e351cefe0db24ec0fe62105ef)
 
   ;; ==========================================================================
   ;; INIT
+
+  ; none!
 
   ;; ==========================================================================
   ;; CODE
@@ -36,11 +39,11 @@
      unpayable
      mstore-function-selector
 
+     (def '*memloc-new-contract-at* 0x60)
      (function *stamp*
                (seq
-                 (emit3
-                  *stamped*
-                  (caller)
+                 (mstore ; save return value (created-at address) for event
+                  *memloc-new-contract-at*
                   (create       ; ...that creates greeters...
                    (seq
                      (sstore *storloc-greeting* *initial-greeting*)
@@ -66,6 +69,6 @@
                                   (return (sload *storloc-greeting*)))
 
                         ;; fallback
-                        (panic)))))
-                  0x0) ; emit3 data (none)
-                 )))))
+                        (panic))))))
+                 ; event with one indexed chunk (address) and some data (address)
+                 (emit1 *event-stamped* (caller) (mload *memloc-new-contract-at*) 0x20))))))
