@@ -1,0 +1,7 @@
+pragma solidity ^0.4.19;
+
+interface greeter {
+    function greet() view returns(uint256);
+    function greeting() view returns(uint256);
+    function setGreeting(string) public;
+}
