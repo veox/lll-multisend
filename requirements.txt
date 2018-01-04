@@ -1,1 +1,1 @@
-populus>=2.3.0
+populus==2.1.0

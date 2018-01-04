@@ -1,5 +1,5 @@
 {
-    "version":"8",
+    "version":"7",
     "compilation":{
         "contracts_source_dirs": ["./contracts"],
         "import_remappings": [],
