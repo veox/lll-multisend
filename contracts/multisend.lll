@@ -45,10 +45,10 @@
      (mstore *memloc-to-ptr* (calldataload 0x04))
      (mstore *memloc-amt-ptr* (calldataload 0x24))
 
-     ;; ;; `_to[]` and `_amt[]` lengths must match
-     ;; (unless (= (calldataload (mload *memloc-to-ptr*))
-     ;;            (calldataload (mload *memloc-amt-ptr*)))
-     ;;   (revert 0 0))
+     ;; `_to[]` and `_amt[]` lengths must match
+     (unless (= (calldataload (+ (mload *memloc-to-ptr*) 0x04))
+                (calldataload (+ (mload *memloc-amt-ptr*) 0x04)))
+       (revert 0 0))
 
      ;; start from right off the end of arrays
      (mstore *memloc-counter* (calldataload (+ (mload *memloc-to-ptr*)
