@@ -42,32 +42,23 @@
      ;; the 0th element is also its length; the lengths should be equal
 
      ;; store pointers to length-elements (for now)
-     (mstore *memloc-to-ptr* (calldataload 0x04))
-     (mstore *memloc-amt-ptr* (calldataload 0x24))
+     (mstore *memloc-to-ptr*  (+ (calldataload 0x04) 0x04))
+     (mstore *memloc-amt-ptr* (+ (calldataload 0x24) 0x04))
 
      ;; `_to[]` and `_amt[]` lengths must match
-     (unless (= (calldataload (+ (mload *memloc-to-ptr*) 0x04))
-                (calldataload (+ (mload *memloc-amt-ptr*) 0x04)))
+     (unless (= (calldataload (mload *memloc-to-ptr*))
+                (calldataload (mload *memloc-amt-ptr*)))
        (revert 0 0))
 
      ;; start from right off the end of arrays
-     (mstore *memloc-counter* (calldataload (+ (mload *memloc-to-ptr*)
-                                               0x04))) ; friggin' funcsel...
-
-     ;; ;; DEBUG
-     ;; (log1 *memloc-counter* 0x20 0x1337)
-     ;; (log1 *memloc-scratchpad* 0x20 0x1337)
-     ;; (log1 *memloc-to-ptr* 0x20 0x1337)
-     ;; (log1 *memloc-amt-ptr* 0x20 0x1337)
+     (mstore *memloc-counter* (calldataload (mload *memloc-to-ptr*)))
 
      ;; LOOP through arrays in reverse
      (while
       (mload *memloc-counter*) ;; last processed array member is not 0th
       (seq
         ;; calculate offset
-        (mstore *memloc-scratchpad*
-                (+ (* (mload *memloc-counter*) 0x20)
-                   0x04)) ; friggin' funcsel...
+        (mstore *memloc-scratchpad* (* (mload *memloc-counter*) 0x20))
 
         (send *maxgas*
               ;; to
@@ -76,14 +67,6 @@
               ;; value
               (calldataload (+ (mload *memloc-amt-ptr*)
                                (mload *memloc-scratchpad*))))
-
-        ;; DEBUG
-        (mstore 0x100 (calldataload (+ (mload *memloc-to-ptr*)
-                                       (mload *memloc-scratchpad*))))
-        (log1 0x100 0x20 0x42)
-        (mstore 0x100 (calldataload (+ (mload *memloc-amt-ptr*)
-                                       (mload *memloc-scratchpad*))))
-        (log1 0x100 0x20 0x42)
 
         ;; decrement counter
         (mstore *memloc-counter* (- (mload *memloc-counter*) 1))))
