@@ -50,7 +50,7 @@
                 (calldataload (mload *memloc-amt-ptr*)))
        (revert 0 0))
 
-     ;; start from right off the end of arrays
+     ;; start from the last elements of arrays
      (mstore *memloc-counter* (calldataload (mload *memloc-to-ptr*)))
 
      ;; LOOP through arrays in reverse
