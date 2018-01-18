@@ -60,6 +60,8 @@
         ;; calculate offset
         (mstore *memloc-scratchpad* (* (mload *memloc-counter*) 0x20))
 
+        ;; FIXME: bounce failed transaction balances back
+        ;; TODO: perhaps return which ones failed? up to 32?..
         (send *maxgas*
               ;; to
               (calldataload (+ (mload *memloc-to-ptr*)
