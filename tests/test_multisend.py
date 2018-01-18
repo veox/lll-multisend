@@ -21,7 +21,10 @@ def test_multisend(chain):
             'value': 1
         })
 
-    txhash = ms.transact({'value': sum(amt)}).sendMany(to, amt)
+    txhash = ms.transact({
+        'value': sum(amt),
+        'gas': 21000 * len(to)
+    }).sendMany(to, amt)
     txreceipt = chain.wait.for_receipt(txhash)
 
     # pretty when run as `pytest --capture=no tests/test_multisend.py`
