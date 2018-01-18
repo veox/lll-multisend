@@ -18,5 +18,3 @@ def test_multisend(chain):
 
     assert chain.web3.eth.getBalance(ms.address) == 0
     assert chain.web3.eth.getBalance(to[0]) == amt[0]
-
-    assert False
