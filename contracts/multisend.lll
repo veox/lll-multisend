@@ -51,20 +51,18 @@
                 (+ (mload *memloc-amt-ptr*) 0x20)) ; `_amt[]` length
        (panic))
 
+     ;; start from right off the end of arrays
+     (mstore *memloc-counter* (mload *memloc-scratchpad*))
      ;; LOOP through arrays in reverse
-     (for
-      ;; INIT: start from right off the end of arrays
-      (mstore *memloc-counter* (mload *memloc-scratchpad*))
+     (while
       ;; PRED: last processed array member is not 0th
-      (!= (mload *memloc-counter*) 0)
-      ;; POST: nothing special
-      ()
+      (mload *memloc-counter*)
       ;; BODY:
       (seq
         ;; decrement counter immediately
         (mstore *memloc-counter* (- (mload *memloc-counter*) 1))
         ;; calculate offset
-        (mstore *memloc-scratchpad* (* (mload *memloc-counter*) 0x20)
+        (mstore *memloc-scratchpad* (* (mload *memloc-counter*) 0x20))
 
         (send *maxgas*
               ;; to
@@ -75,5 +73,5 @@
               (calldataload (+ (+ (mload *memloc-amt-ptr*)
                                   (mload *memloc-tmp*))
                                0x04)) ; friggin' function selector...
-        ))
+              )))
      (return 0 0))))
