@@ -30,12 +30,12 @@
   (returnlll
    (seq
      ;; wasteful, compliant: must specify 4-byte web3 function
-     (unless (= calldata-function-selector *funcsel-send-many*) (panic))
+     (unless (= calldata-function-selector *funcsel-send-many*) (revert 0 0))
      ;; data size (sans selector) must be a multiple of 64 (32+32) bytes
-     (unless (= (% (- calldatasize 4) 64) 0) (panic))
+     (unless (= (% (- (calldatasize) 4) 64) 0) (revert 0 0))
 
      ;; don't proceed if arrays empty
-     (when (= calldatasize 4) (return 0 0))
+     (when (= (calldatasize) 4) (return 0 0))
 
      ;; in calldata, 0x04 contains pointer to `_to[]` data, 0x24 its length
      (mstore *memloc-to-ptr* (calldataload 0x04))
@@ -49,15 +49,13 @@
      ;; `_to[]` and `_amt[]` lengths must match
      (unless (= (mload *memloc-scratchpad*)        ; `_to[]` length
                 (+ (mload *memloc-amt-ptr*) 0x20)) ; `_amt[]` length
-       (panic))
+       (revert 0 0))
 
      ;; start from right off the end of arrays
      (mstore *memloc-counter* (mload *memloc-scratchpad*))
      ;; LOOP through arrays in reverse
      (while
-      ;; PRED: last processed array member is not 0th
-      (mload *memloc-counter*)
-      ;; BODY:
+      (mload *memloc-counter*) ;; last processed array member is not 0th
       (seq
         ;; decrement counter immediately
         (mstore *memloc-counter* (- (mload *memloc-counter*) 1))
@@ -66,12 +64,9 @@
 
         (send *maxgas*
               ;; to
-              (calldataload (+ (+ (mload *memloc-to-ptr*)
-                                  (mload *memloc-tmp*))
-                               0x04)) ; friggin' function selector...
+              (calldataload (+ (mload *memloc-to-ptr*)
+                               (mload *memloc-scratchpad*)))
               ;; value
-              (calldataload (+ (+ (mload *memloc-amt-ptr*)
-                                  (mload *memloc-tmp*))
-                               0x04)) ; friggin' function selector...
-              )))
+              (calldataload (+ (mload *memloc-amt-ptr*)
+                               (mload *memloc-scratchpad*))))))
      (return 0 0))))
