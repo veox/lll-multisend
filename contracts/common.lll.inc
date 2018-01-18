@@ -19,6 +19,14 @@
        (div input (exp 2 224)))
 
   ;; --------------------------------------------------------------------------
+  ;; @author Daniel Ellison <zigguratt>
+  ;; @notice Retrieves the requested function ID from the first four bytes of
+  ;;         the call data.
+
+  (def 'calldata-function-selector
+       (shift-right (calldataload 0x00)))
+
+  ;; --------------------------------------------------------------------------
   ;; @author Ben Edgington <benjaminion>
   ;; @notice Gets the function ID and stores it in memory for reference.
   ;; @dev The function ID is stored at a pre-defined location 0x20 and will
@@ -27,7 +35,7 @@
 
   (def 'mstore-function-selector
        (mstore *memloc-function-selector*
-               (shift-right (calldataload 0x00))))
+               calldata-function-selector))
 
   ;; --------------------------------------------------------------------------
   ;; @author Just about everybody.
