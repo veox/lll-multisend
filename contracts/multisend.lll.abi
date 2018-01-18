@@ -1,0 +1,21 @@
+[
+    {
+        "constant": true,
+        "inputs":
+        [
+            {
+                "name":"_to",
+                "type":"address[]"
+            },
+            {
+                "name":"_amt",
+                "type":"uint256[]"
+            }
+        ],
+        "name": "sendMany",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "pure",
+        "type":"function"
+    }
+]

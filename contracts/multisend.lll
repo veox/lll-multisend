@@ -1,0 +1,79 @@
+;;;; ==========================================================================
+;;;; @title Ether Multisend
+;;;; @author Noel Maersk <veox>
+;;;; TODO: use REVERT
+
+(seq
+  (include "./common.lll.inc")
+
+  ;; ==========================================================================
+  ;; MEMORY LAYOUT
+
+  (def '*memloc-counter* 0x60)
+  (def '*memloc-to-ptr*  0x80) ; `_to[]` pointer to calldata location
+  (def '*memloc-amt-ptr* 0xa0) ; `_amt[]` pointer to calldata location
+
+  ;; ==========================================================================
+  ;; CONSTANTS
+
+  (def '*funcsel-send-many* 0x80862479) ; sendMany(address[],uint256[])
+  (def '*maxgas* 30000)                 ; max gas allowed per message
+
+  ;; ==========================================================================
+  ;; INIT
+
+  unpayable
+
+  ;; ==========================================================================
+  ;; CODE
+
+  (returnlll
+   (seq
+     ;; wasteful, compliant: must specify 4-byte web3 function
+     (unless (= calldata-function-selector *funcsel-send-many*) (panic))
+     ;; data size (sans selector) must be a multiple of 64 (32+32) bytes
+     (unless (= (% (- calldatasize 4) 64) 0) (panic))
+
+     ;; don't proceed if arrays empty
+     (when (= calldatasize 4) (return 0 0))
+
+     ;; in calldata, 0x04 contains pointer to `_to[]` data, 0x24 its length
+     (mstore *memloc-to-ptr* (calldataload 0x04))
+     (mstore *memloc-scratchpad* (calldataload 0x24))
+     ;; calculate location of pointer to `_amt[]`
+     (mstore *memloc-amt-ptr*
+             (calldataload (+ (+ (mload *memloc-to-ptr*)
+                                 (* (mload *memloc-scratchpad*) 0x20))
+                              0x04))) ; friggin' function selector...
+
+     ;; `_to[]` and `_amt[]` lengths must match
+     (unless (= (mload *memloc-scratchpad*)        ; `_to[]` length
+                (+ (mload *memloc-amt-ptr*) 0x20)) ; `_amt[]` length
+       (panic))
+
+     ;; LOOP through arrays in reverse
+     (for
+      ;; INIT: start from right off the end of arrays
+      (mstore *memloc-counter* (mload *memloc-scratchpad*))
+      ;; PRED: last processed array member is not 0th
+      (!= (mload *memloc-counter*) 0)
+      ;; POST: nothing special
+      ()
+      ;; BODY:
+      (seq
+        ;; decrement counter immediately
+        (mstore *memloc-counter* (- (mload *memloc-counter*) 1))
+        ;; calculate offset
+        (mstore *memloc-scratchpad* (* (mload *memloc-counter*) 0x20)
+
+        (send *maxgas*
+              ;; to
+              (calldataload (+ (+ (mload *memloc-to-ptr*)
+                                  (mload *memloc-tmp*))
+                               0x04)) ; friggin' function selector...
+              ;; value
+              (calldataload (+ (+ (mload *memloc-amt-ptr*)
+                                  (mload *memloc-tmp*))
+                               0x04)) ; friggin' function selector...
+        ))
+     (return 0 0))))
