@@ -17,7 +17,7 @@
   ;; CONSTANTS
 
   (def '*funcsel-send-many* 0x80862479) ; sendMany(address[],uint256[])
-  (def '*maxgas* 30000)                 ; max gas allowed per message
+  (def '*maxgas* 3000)                  ; max gas allowed per message
 
   ;; ==========================================================================
   ;; INIT
