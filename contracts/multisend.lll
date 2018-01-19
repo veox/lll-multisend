@@ -1,7 +1,10 @@
 ;;;; ==========================================================================
 ;;;; @title Ether Multisend
 ;;;; @author Noel Maersk <veox>
-;;;; TODO: use REVERT
+
+;;;; Discussion on Reddit:
+;;;; https://www.reddit.com/r/ethereum/comments/7r3q71/
+;;;;         incentivizing_1ton_transaction_batching_to/dsvqanj/
 
 (seq
   (include "./common.lll.inc")
