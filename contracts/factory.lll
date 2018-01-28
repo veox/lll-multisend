@@ -1,5 +1,5 @@
 ;;;; ==========================================================================
-;;;; @title Factory: a contract that creates other contracts
+;;;; @title Factory: creates other pre-defined contracts.
 ;;;; @author Noel Maersk <veox>
 
 (seq
@@ -69,6 +69,6 @@
                                   (return (sload *storloc-greeting*)))
 
                         ;; fallback
-                        (panic))))))
+                        (revert 0 0))))))
                  ; event with one indexed chunk (address) and some data (address)
                  (emit1 *event-stamped* (caller) (mload *memloc-new-contract-at*) 0x20))))))
