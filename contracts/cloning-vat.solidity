@@ -1,5 +1,6 @@
 pragma solidity ^0.4.19;
 
 interface cloning_vat {
-    function clone(address that) public;
+    function clone(address _from) public;
+    //event Cloned(address indexed _caller, address indexed _from, address _to);
 }

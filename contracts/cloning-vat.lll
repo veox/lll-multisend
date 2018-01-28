@@ -19,10 +19,10 @@
   ;; TODO: isn't it 0x7f?..
   (def '*max-precomp-addr* 0xff) ; addresses reserved for precompiles
 
-  (def '*clone* 0xffffff) ; clone(address)
+  (def '*clone* 0x8124b78e) ; clone(address)
 
   (def '*event-cloned* ; cloned(address,address,address)
-       0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+       0x9ce1bdd7d0964c6547e8b9b894d2524b432b8483c5b8b73ea949293d876a0f8c)
 
   ;; ==========================================================================
   ;; INIT
@@ -64,6 +64,10 @@
                   (mload *memloc-source-size*)) ; how much to copy
 
      ;; create new contract from memory, saving the destination's address
+     ;; FIXME: add deployment wrapper, so that CODECOPY is performed; otherwise
+     ;;        the code gets executed immediately, reverting on one of the checks
+     ;;        (try it out: comment all checks, run the test; there will be two
+     ;;        log entries for the cloning transaction!)
      (mstore
       *memloc-dest-addr*
       (create 0                              ; wei to transfer
@@ -80,4 +84,4 @@
             (caller)                         ; who requested the cloning, indexed
             (mload *memloc-source-addr*)     ; what was cloned, indexed
             (mload *memloc-dest-addr*) 0x20) ; where it was cloned to, unindexed
-     (stop))))
+     (return *memloc-dest-addr* 0x20))))
