@@ -52,6 +52,21 @@
          (log2 *memloc-scratchpad* datasize id indexed)))
 
   ;; --------------------------------------------------------------------------
+  ;; @author Just about everybody.
+  ;; @notice Convenience macro for emitting events with 2 indexed chunks.
+  ;; @dev Currently does not support data longer than 32 bytes total.
+  ;; @param id 32-byte event identifier.
+  ;; @param indexed0 Data chunk 0 that will also be indexed by in logs.
+  ;; @param indexed1 Data chunk 1 that will also be indexed by in logs.
+  ;; @param data Non-indexed data to be placed in logs.
+  ;; @param datasize Number of bytes in data.
+
+  (def 'emit2 (id indexed0 indexed1 data datasize)
+       (seq
+         (mstore *memloc-scratchpad* data)
+         (log3 *memloc-scratchpad* datasize id indexed0 indexed1)))
+
+  ;; --------------------------------------------------------------------------
   ;; @author Daniel Ellison <zigguratt>
   ;; @notice Determines whether the supplied function selector matches a known
   ;;         one and executes <code-body> if so.

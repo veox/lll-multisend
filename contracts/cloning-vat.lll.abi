@@ -1,0 +1,16 @@
+[
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "that",
+                "type": "address"
+            }
+        ],
+        "name": "clone",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type":"function"
+    }
+]

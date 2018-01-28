@@ -1,0 +1,83 @@
+;;;; ==========================================================================
+;;;; @title Cloning Vat: creates 1:1 bytecode copies of existing contracts.
+;;;; @author Noel Maersk <veox>
+
+(seq
+  (include "./common.lll.inc")
+
+  ;; ==========================================================================
+  ;; MEMORY LAYOUT
+
+  (def '*memloc-dest-addr*   0x00)
+  (def '*memloc-source-addr* 0x20)
+  (def '*memloc-source-size* 0x40)
+  (def '*memloc-source-code* 0x60) ; where the source's code will _start_
+
+  ;; ==========================================================================
+  ;; CONSTANTS
+
+  ;; TODO: isn't it 0x7f?..
+  (def '*max-precomp-addr* 0xff) ; addresses reserved for precompiles
+
+  (def '*clone* 0xffffff) ; clone(address)
+
+  (def '*event-cloned* ; cloned(address,address,address)
+       0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+
+  ;; ==========================================================================
+  ;; INIT
+
+  ; none!
+
+  ;; ==========================================================================
+  ;; CODE
+
+  (returnlll
+   (seq
+     unpayable
+
+     ;; call data can be either 4+32 bytes (web3-compliant)...
+     (when (= 36 (calldatasize))
+       (seq
+         ;; check for matching web3 function selector
+         (unless (= *clone* calldata-function-selector) (revert 0 0))
+         ;; load address as-is (assume web3-compliant call data)
+         (mstore *memloc-source-addr* (calldataload 0x04))))
+     ;; ...or 20 bytes (just the address)
+     (when (= 20 (calldatasize))
+       (seq
+         ;; right-align 20 bytes in 32 bytes of memory (8*12==96)
+         (mstore *memloc-source-addr* (div (calldataload 0x00) (exp 2 96)))))
+
+     ;; must have determined source address by now; and won't clone precompiles
+     (when (<= (mload *memloc-source-addr*) *max-precomp-addr*) (revert 0 0))
+
+     ;; get source's code size
+     (mstore *memloc-source-size* (extcodesize (mload *memloc-source-addr*)))
+     ;; it must be non-zero
+     (when (= 0 (mload *memloc-source-size*)) (revert 0 0))
+
+     ;; copy source code to memory
+     (extcodecopy (mload *memloc-source-addr*)  ; source address
+                  *memloc-source-code*          ; where to copy the code to
+                  0                             ; where the code starts in source
+                  (mload *memloc-source-size*)) ; how much to copy
+
+     ;; create new contract from memory, saving the destination's address
+     (mstore
+      *memloc-dest-addr*
+      (create 0                              ; wei to transfer
+              *memloc-source-code*           ; where to copy the code from
+              (mload *memloc-source-size*))) ; how much to copy
+
+     ;; destination address must be non-zero
+     (when (= 0 (mload *memloc-dest-addr*)) (revert 0 0))
+
+     ;; TODO: more checks before declaring it a success?..
+
+     ;; success!
+     (emit2 *event-cloned*                   ; event id, indexed
+            (caller)                         ; who requested the cloning, indexed
+            (mload *memloc-source-addr*)     ; what was cloned, indexed
+            (mload *memloc-dest-addr*) 0x20) ; where it was cloned to, unindexed
+     (stop))))
