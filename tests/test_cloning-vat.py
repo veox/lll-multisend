@@ -13,6 +13,8 @@ def test_vat(chain):
     txreceipt = chain.wait.for_receipt(txhash)
 
     print('txhash:', txhash)
+    print('tx:')
+    print(chain.web3.eth.getTransaction(txhash))
     print('txreceipt:')
     print(txreceipt)
 
@@ -23,7 +25,7 @@ def test_vat(chain):
         print(chain.web3.toHex(i*32), data[i*64:i*64+64], sep='\t')
 
     # extract cloned contract's address from log entry
-    vat1address = chain.web3.toChecksumAddress(txreceipt['logs'][0]['data'])
+    vat1address = chain.web3.toChecksumAddress(txreceipt['logs'][1]['data'])
     print('vat1:', vat1address)
 
     print(chain.web3.eth.getCode(vat1address))
@@ -43,7 +45,7 @@ def test_vat(chain):
     print(txreceipt)
 
     # form another object, for the twice cloned cloning-vat
-    vat2address = chain.web3.toChecksumAddress(txreceipt['logs'][0]['data'])
+    vat2address = chain.web3.toChecksumAddress(txreceipt['logs'][1]['data'])
     print('vat2:', vat2address)
     print(chain.web3.eth.getCode(vat2address))
     vat2 = CloningVat(address=vat2address)

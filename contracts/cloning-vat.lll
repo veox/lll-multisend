@@ -57,15 +57,31 @@
      ;; it must be non-zero
      (when (= 0 (mload *memloc-source-size*)) (revert 0 0))
 
-     ;;
-     (mstore *memloc-source-code* (* 0xff (exp 2 (- 256 (* 1 8)))))
-     ;;
-     (def '*tmp* 0x180)
-     (mstore *tmp* 0x60)
+     ;; PUSH1 wrapper_size ;; 0x60 0x0e
+     ;;;; DUP1               ;; 0x80
+     ;; CALLDATASIZE       ;; 0x36 (CODESIZE 0x38)
+     ;; SUB                ;; 0x03
+     ;; DUP1               ;; 0x80
+     ;;;; SWAP2              ;; 0x91
+     ;; PUSH1 wrapper_size ;; 0x60 0x0e
+     ;; PUSH1 0x00         ;; 0x60 0x00
+     ;; CODECOPY           ;; 0x39
+     ;; PUSH1 0x00         ;; 0x60 0x00
+     ;; RETURN             ;; 0xf3
+     ;; STOP               ;; 0x00
+     ;; -----
+     ;; wrapper_size == 14 == 0x0e
+     ;;(def '*deploy-wrapper* 0x600e80360380916000396000f300)
+     ;;                         60fb8061000d6000396000f300
+     ;;(def '*deploy-wrapper* 0x600e360380600e6000396000f300)
+     (def '*deploy-wrapper* 0x600e380380600e6000396000f300)
+     ;(mstore 0x1c0 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+     ;; magicnum 144: 256 - 14*8
+     (mstore *memloc-source-code* (* *deploy-wrapper* (exp 2 144)))
 
      ;; copy source code to memory
      (extcodecopy (mload *memloc-source-addr*)  ; source address
-                  (+ *memloc-source-code* 13)   ; where to copy the code to
+                  (+ *memloc-source-code* 14)   ; where to copy the code to
                   0                             ; where the code starts in source
                   (mload *memloc-source-size*)) ; how much to copy
 
@@ -80,7 +96,7 @@
       *memloc-dest-addr*
       (create 0                              ; wei to transfer
               *memloc-source-code*           ; where to copy the code from
-              (mload *memloc-source-size*))) ; how much to copy
+              (+ 14 (mload *memloc-source-size*)))) ; how much to copy
 
      ;; destination address must be non-zero (i.e. CREATE succeeded)
      ;(when (= 0 (mload *memloc-dest-addr*)) (revert 0 0))
