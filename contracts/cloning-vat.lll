@@ -9,7 +9,7 @@
   ;; ==========================================================================
   ;; MEMORY LAYOUT
 
-  (def '*memloc-dest-addr*   0x00)
+  (def '*memloc-dest-addr*   0x00) ; store clone's address here (for logging)
   (def '*memloc-source-addr* 0x20) ; will copy runtime bytecode from here
   (def '*memloc-source-size* 0x40) ; size of runtime bytecode
   (def '*memloc-source-code* 0x60) ; where the to-clone code will _start_
@@ -26,7 +26,7 @@
        0x9ce1bdd7d0964c6547e8b9b894d2524b432b8483c5b8b73ea949293d876a0f8c)
 
   ;; raw code that copies everything but itself - to be used during CREATE
-  ;; ------------------------------
+  ;; ----------------------------------------------------------------------
   ;; PUSH1 wrapper_size ; 0x60 0x0e
   ;; CODESIZE           ; 0x38
   ;; SUB                ; 0x03      ; runtime code size (sans this wrapper)
@@ -37,9 +37,10 @@
   ;; PUSH1 0x00         ; 0x60 0x00
   ;; RETURN             ; 0xf3      ; ...and return it: set contract's code
   ;; STOP               ; 0x00
-  ;; ------------------------------
+  ;; ----------------------------------------------------------------------
   ;; wrapper_size == 14 == 0x0e
   (def '*wrapper* 0x600e380380600e6000396000f300)
+  ;; length in bytes of the wrapper above
   (def '*wrapper-size* 14)
 
   ;; ==========================================================================
@@ -81,7 +82,8 @@
 
      ;; copy source code to memory
      (extcodecopy (mload *memloc-source-addr*)  ; source address
-                  (+ *memloc-source-code* 14)   ; where to copy the code to
+                  (+ *wrapper-size*             ; (don't write over wrapper)
+                     *memloc-source-code*)      ; where to copy the code to
                   0                             ; where the code starts in source
                   (mload *memloc-source-size*)) ; how much to copy
 
