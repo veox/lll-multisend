@@ -57,12 +57,15 @@
      ;; it must be non-zero
      (when (= 0 (mload *memloc-source-size*)) (revert 0 0))
 
-     ;;PUSH1 0x00 CODECOPY PUSH1 0x00 RETURN STOP
-     (mstore *memloc-source-code* (* 0xf (exp 2 244)))
+     ;;
+     (mstore *memloc-source-code* (* 0xff (exp 2 (- 256 (* 1 8)))))
+     ;;
+     (def '*tmp* 0x180)
+     (mstore *tmp* 0x60)
 
      ;; copy source code to memory
      (extcodecopy (mload *memloc-source-addr*)  ; source address
-                  (+ *memloc-source-code* 7)    ; where to copy the code to
+                  (+ *memloc-source-code* 13)   ; where to copy the code to
                   0                             ; where the code starts in source
                   (mload *memloc-source-size*)) ; how much to copy
 
@@ -79,8 +82,8 @@
               *memloc-source-code*           ; where to copy the code from
               (mload *memloc-source-size*))) ; how much to copy
 
-     ;; destination address must be non-zero
-     (when (= 0 (mload *memloc-dest-addr*)) (revert 0 0))
+     ;; destination address must be non-zero (i.e. CREATE succeeded)
+     ;(when (= 0 (mload *memloc-dest-addr*)) (revert 0 0))
 
      ;; TODO: more checks before declaring it a success?..
 
