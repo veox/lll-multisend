@@ -57,11 +57,16 @@
      ;; it must be non-zero
      (when (= 0 (mload *memloc-source-size*)) (revert 0 0))
 
+     ;;PUSH1 0x00 CODECOPY PUSH1 0x00 RETURN STOP
+     (mstore *memloc-source-code* (* 0xf (exp 2 244)))
+
      ;; copy source code to memory
      (extcodecopy (mload *memloc-source-addr*)  ; source address
-                  *memloc-source-code*          ; where to copy the code to
+                  (+ *memloc-source-code* 7)    ; where to copy the code to
                   0                             ; where the code starts in source
                   (mload *memloc-source-size*)) ; how much to copy
+
+     (log1 0x00 0x200 0x0101010101010101010101010101010101010101010101010101010101010101)
 
      ;; create new contract from memory, saving the destination's address
      ;; FIXME: add deployment wrapper, so that CODECOPY is performed; otherwise
