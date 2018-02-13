@@ -6,6 +6,31 @@
   (def '*memloc-scratchpad*        0x40)
 
   ;; ==========================================================================
+  ;; WRAPPER
+
+  ;; --------------------------------------------------------------------------
+  ;; @author Noel Maersk <veox>
+  ;; @notice Raw code that copies everything but itself - to be used during
+  ;;         CREATE in cloning-vat/garden patterns.
+  ;; @dev MUST be 32 bytes or less: commonly used directly with `mstore`!
+  ;; ----------------------------------------------------------------------
+  ;; PUSH1 wrapper_size ; 0x60 0x0e
+  ;; CODESIZE           ; 0x38
+  ;; SUB                ; 0x03      ; runtime code size (sans this wrapper)
+  ;; DUP1               ; 0x80      ; duplicate for CODECOPY
+  ;; PUSH1 wrapper_size ; 0x60 0x0e
+  ;; PUSH1 0x00         ; 0x60 0x00
+  ;; CODECOPY           ; 0x39      ; copy to memory...
+  ;; PUSH1 0x00         ; 0x60 0x00
+  ;; RETURN             ; 0xf3      ; ...and return it: set contract's code
+  ;; STOP               ; 0x00
+  ;; ----------------------------------------------------------------------
+  ;; wrapper_size == 14 == 0x0e
+  (def '*wrapper* 0x600e380380600e6000396000f300)
+  ;; length in bytes of the wrapper above
+  (def '*wrapper-size* 14)
+
+  ;; ==========================================================================
   ;; STDLIB
 
   ;; --------------------------------------------------------------------------
