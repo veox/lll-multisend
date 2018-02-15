@@ -1,6 +1,0 @@
-pragma solidity ^0.4.19;
-
-interface factory {
-    function stamp() public;
-    //event stamped(address indexed _caller, address _product);
-}
