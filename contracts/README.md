@@ -3,7 +3,9 @@
 The `factory` contract has been moved to the [`lll-creation-patterns`][lcp]
 repo and renamed to `stamping-press`.
 
-Sorry for the broken links! The last commit to have it is `6d7ea234`:
+Same goes for `cloning-vat` - it hasn't been renamed.
+
+Sorry for the broken links! The last commit to have them is `6d7ea234`:
 on [gitlab][commit] or [github][backup] (backup).
 
 [lcp]: https://gitlab.com/veox/lll-creation-patterns
