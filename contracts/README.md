@@ -1,4 +1,10 @@
-# Note
+# contracts
+
+* `black-hole`: self-destructs to itself on any transaction.
+* `greeter`: returns 42; allows changing the value.
+* `multisend`: performs multiple ether transfers within a single transaction call.
+
+## Note
 
 The `factory` contract has been moved to the [`lll-creation-patterns`][lcp]
 repo and renamed to `stamping-press`.
