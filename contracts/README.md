@@ -1,6 +1,6 @@
 # contracts
 
-* `black-hole`: self-destructs to itself on any transaction.
+* `collapser`: self-destructs to itself on any invocation.
 * `greeter`: returns 42; allows changing the value.
 * `multisend`: performs multiple ether transfers within a single transaction call.
 
