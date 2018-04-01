@@ -1,0 +1,72 @@
+;;;; ==========================================================================
+;;;; @title SPRAY! PAINT! THE! WALLS!
+;;;; @author Noel Maersk <veox>
+
+(seq
+  (include "./common.lll.inc")
+
+  ;; ==========================================================================
+  ;; MEMORY LAYOUT
+
+  (def '*memloc-counter*       0x60)  ; calldata location currently being processed
+  (def '*memloc-acd-funcsel*   0x80)  ; will store funcsel (right-aligned) here
+  (def '*memloc-acd-to*        0x100) ; approve-to "address"
+  (def '*memloc-acd-datachunk* 0x120) ; raw value to-be-pushed
+
+  (def '*memloc-acd-start*     0x7c)  ; approval call data begins here
+
+  ;; ==========================================================================
+  ;; CONSTANTS
+
+  (def '*aragon-token-addr* 0x960b236A07cf122663c4303350609A66A7B288C0)
+  (def '*approve-funcsel*   0x095ea7b3) ; approve(address,uint256)
+
+  ;; ==========================================================================
+  ;; UTILS
+
+  ;; current datachunk location/offset in call data
+  (def 'cd-offset (* 32 (mload *memloc-counter*)))
+
+  ;; ==========================================================================
+  ;; INIT
+
+  unpayable
+
+  ;; ==========================================================================
+  ;; CODE
+
+  (returnlll
+   (seq
+     unpayable
+
+     ;; call data size must be a multiple of 32 bytes
+     (unless (= (% (calldatasize) 32) 0) (revert 0 0))
+
+     ;; store function selector - which won't be changing - to its memory slot
+     (mstore *memloc-acd-funcsel* *approve-funcsel*)
+
+     ;; LOOP through call data in chunks of 32 bytes
+     (until
+      ;; would process datachunk past provided call data
+      (>= cd-offset (calldatasize))
+      (seq
+        ;; address we're "approving to" to store the datachunk
+        (mstore *memloc-acd-to* (mload *memloc-counter*))
+        ;; move datachunk from call data to memory
+        (mstore *memloc-acd-datachunk* (calldataload cd-offset))
+      
+        ;;
+        (call
+         (gas)               ; provide all remaining gas for call
+         *aragon-token-addr* ; to this contract,
+         0                   ; with no value transferred,
+         *memloc-acd-start*  ; call data starting here and of length
+         68                  ; 4 + 32 + 32 (fuscsel + approve-to + amount);
+         *memloc-scratchpad* ; return value to be stored in this memloc,
+         32)                 ; return value of this size
+
+        ;; increment counter
+        (mstore *memloc-counter* (+ 1 (mload *memloc-counter*)))))
+
+      ;; great success!
+      (selfdestruct (caller)))))
