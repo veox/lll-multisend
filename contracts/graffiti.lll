@@ -10,10 +10,10 @@
 
   (def '*memloc-counter*       0x60)  ; calldata location currently being processed
   (def '*memloc-acd-funcsel*   0x80)  ; will store funcsel (right-aligned) here
-  (def '*memloc-acd-to*        0x100) ; approve-to "address"
-  (def '*memloc-acd-datachunk* 0x120) ; raw value to-be-pushed
+  (def '*memloc-acd-to*        0xa0) ; approve-to "address"
+  (def '*memloc-acd-datachunk* 0xc0) ; raw value to-be-pushed
 
-  (def '*memloc-acd-start*     0x7c)  ; approval call data begins here
+  (def '*memloc-acd-start*     0x9c)  ; approval call data begins here (0xa0 - 4)
 
   ;; ==========================================================================
   ;; CONSTANTS
@@ -54,7 +54,10 @@
         (mstore *memloc-acd-to* (mload *memloc-counter*))
         ;; move datachunk from call data to memory
         (mstore *memloc-acd-datachunk* (calldataload cd-offset))
-      
+
+        ;; DEBUG: uncomment to view memory during execution
+        ;;(log1 0x00 0x200 0x0101010101010101010101010101010101010101010101010101010101010101)
+
         ;;
         (call
          (gas)               ; provide all remaining gas for call
