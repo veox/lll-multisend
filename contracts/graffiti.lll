@@ -35,6 +35,7 @@
   ;; ==========================================================================
   ;; CODE
 
+  ;; TODO: can be single-shot! cheaper than deploy-then-destroy
   (returnlll
    (seq
      unpayable
