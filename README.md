@@ -1,9 +1,6 @@
-# lll-contracts
+# lll-multisend
 
-These are a few simple LLL examples.
-
-Creation patterns (various approaches to Factory and the like) have been
-moved to a [separate repository](https://gitlab.com/veox/lll-creation-patterns).
+Send ether to multiple recipients in a single transaction.
 
 
 ## License
