@@ -5,9 +5,10 @@ Send ether to multiple recipients in a single transaction.
 
 ## Nomenclature
 
-* `resident` - constant-code account, stateless or not; a "classic" contract;
-* `macrotx` - "transient" code run at the bottom of the call stack; best known
-  example - the "deploy contract" macro.
+* `resident` program: constant-code account, stateless or not; a "classic"
+  contract.
+* `transient` program: code run at the bottom of a transaction's call stack;
+  e.g. the "deploy contract" macro.
 
 
 ## License
