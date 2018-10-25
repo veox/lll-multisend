@@ -2,6 +2,7 @@
 
 * `collapser`: self-destructs to itself on any invocation.
 * `greeter`: returns 42; allows changing the value.
+* `graffiti`: push data into ERC20 contracts' allowance fields
 * `multisend`: performs multiple ether transfers within a single transaction call.
 
 ## Note
