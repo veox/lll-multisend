@@ -1,5 +1,5 @@
 pragma solidity ^0.4.19;
 
-interface multisend {
+interface multisend_resident_ether {
     function sendMany(address[] _to, uint256[] _amt) public pure;
 }

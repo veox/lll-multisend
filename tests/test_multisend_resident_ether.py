@@ -1,5 +1,5 @@
-def test_multisend(chain):
-    ms, _ = chain.provider.get_or_deploy_contract('multisend')
+def test_multisend_resident_ether(chain):
+    ms, _ = chain.provider.get_or_deploy_contract('multisend-resident-ether')
 
     to = [
         '0x0101010101010101010101010101010101010101',
@@ -27,7 +27,7 @@ def test_multisend(chain):
     }).sendMany(to, amt)
     txreceipt = chain.wait.for_receipt(txhash)
 
-    # pretty when run as `pytest --capture=no tests/test_multisend.py`
+    # pretty when run as `pytest --capture=no <path/to/file>`
     print('')
     print('Gas used (total):', txreceipt['gasUsed'])
     print('Gas used (avg/xfer):', txreceipt['gasUsed']/len(to))
