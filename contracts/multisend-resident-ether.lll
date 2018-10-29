@@ -38,7 +38,9 @@
      (unless (= (% (- (calldatasize) 4) 64) 0) (revert 0 0))
 
      ;; don't proceed if not enough data for at least one (to,amt) pair
-     (when (< (calldatasize) 196) (return 0 0))
+     ;; magicnum 196: 4 + (32+32+32) + (32+32+32), where
+     ;; magicnum (32+32+32): (start_ptr + size + element)
+     (when (< (calldatasize) 196) (revert 0 0))
 
      ;; in call data, 0x04 contains pointer to `_to[]` data, where the 0th
      ;; element is its length; 0x24 contains pointer to `_amt[]` data, where
