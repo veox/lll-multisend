@@ -19,7 +19,6 @@
   ;; ==========================================================================
   ;; CONSTANTS
 
-  (def '*funcsel-send-many* 0x80862479) ; sendMany(address[],uint256[])
   (def '*maxgas* 30000)                 ; max gas allowed per message
 
   ;; ==========================================================================
@@ -31,26 +30,21 @@
   ;; CODE
 
   (seq
-    ;; FIXME: function selector useless in transient programs; remove
-    ;;        and adjust calldatasize calculations
-
-    ;; wasteful, compliant: must specify 4-byte web3 function
-    (unless (= calldata-function-selector *funcsel-send-many*) (revert 0 0))
-    ;; data size (sans selector) must be a multiple of 64 (32+32) bytes
-    (unless (= (% (- (calldatasize) 4) 64) 0) (revert 0 0))
+    ;; data size must be a multiple of 64 (32+32) bytes
+    (unless (= (% (calldatasize) 64) 0) (revert 0 0))
 
     ;; don't proceed if not enough data for at least one (to,amt) pair
-    ;; magicnum 196: 4 + (32+32+32) + (32+32+32), where
+    ;; magicnum 192: (32+32+32) + (32+32+32), where
     ;; magicnum (32+32+32): (start_ptr + size + element)
-    (when (< (calldatasize) 196) (revert 0 0))
+    (when (< (calldatasize) 192) (revert 0 0))
 
-    ;; in call data, 0x04 contains pointer to `_to[]` data, where the 0th
-    ;; element is its length; 0x24 contains pointer to `_amt[]` data, where
+    ;; in call data, 0x00 contains pointer to `_to[]` data, where the 0th
+    ;; element is its length; 0x20 contains pointer to `_amt[]` data, where
     ;; the 0th element is also its length; the lengths should be equal
 
     ;; store pointers to length-elements (for now)
-    (mstore *memloc-to-ptr*  (+ (calldataload 0x04) 0x04))
-    (mstore *memloc-amt-ptr* (+ (calldataload 0x24) 0x04))
+    (mstore *memloc-to-ptr*  (calldataload 0x00))
+    (mstore *memloc-amt-ptr* (calldataload 0x20))
 
     ;; `_to[]` and `_amt[]` lengths must match
     (unless (= (calldataload (mload *memloc-to-ptr*))
