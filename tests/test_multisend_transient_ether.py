@@ -50,7 +50,9 @@ def test_multisend_transient_ether(chain):
         'to': '', # sic!
         'data': txdata,
         'value': sum(amt),
-        'gas': 3000 * len(to), # FIXME: magicnum
+        # FIXME: magicnum 3000
+        # magicnum 50000: to work around Populllus thinking empty-`to` equates CREATE call
+        'gas': 50000 + 3000 * len(to),
         })
     txreceipt = chain.wait.for_receipt(txhash)
 
