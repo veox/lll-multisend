@@ -35,7 +35,7 @@
 
   (def '*cd-dataoffset*  64)     ; compiled program will fit in first N bytes
   (def '*cd-Rdataoffset* 160)    ; UGLY: (+ *cd-dataoffset* 32) shortcut
-  (def '*maxgas*         3000)   ; max gas for each nested call
+  (def '*gaslim*         30000)  ; gas limit for each nested call
 
   ;; ==========================================================================
   ;; INIT
@@ -60,7 +60,7 @@
         (mstore *memloc-scratchpad* (+ *cd-Rdataoffset*
                                        (* (mload *memloc-counter*) 0x20)))
 
-        (send *maxgas*
+        (send *gaslim*
               ;; to
               (calldataload (mload *memloc-scratchpad*))
               ;; amt

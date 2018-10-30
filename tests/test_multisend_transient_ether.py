@@ -11,7 +11,7 @@ def give_balances(chain, to):
 
 def test_multisend_transient_ether(chain):
     # FIXME: manual copy-paste from `lllc -o -x multisend-transient-ether.lll`
-    mscode = '0x' + '6040356060525b60605115603c5760206060510260a0016040526000806000806020604051013560405135610bb8f1506001606051036060526006565b00'
+    mscode = '0x' + '6040356060525b60605115603c5760206060510260a0016040526000806000806020604051013560405135617530f1506001606051036060526006565b00'
 
     nrecipients = 10
     to = [chain.web3.toHex(
@@ -39,7 +39,6 @@ def test_multisend_transient_ether(chain):
     msdata_bytes = b''.join([chain.web3.toBytes(hexstr=val)
                              for pair in zip(to_hexstr, amt_hexstr) for val in pair])
 
-    # WORKHERE
     txdata_bytes = mscode_bytes + nrecipients_bytes + msdata_bytes
     txdata = chain.web3.toHex(txdata_bytes)
 
@@ -60,12 +59,13 @@ def test_multisend_transient_ether(chain):
         'value': sum(amt),
         # FIXME: magicnum 3000
         # magicnum 50000: to work around Populllus thinking empty-`to` equates CREATE call
-        'gas': 50000 + 3000 * len(to),
+        'gas': 50000 + 30000 * len(to),
         })
     txreceipt = chain.wait.for_receipt(txhash)
 
     # pretty when run as `pytest --capture=no <path/to/file>`
     print('')
+    print('Gas limit:          ', chain.web3.eth.getTransaction(txhash)['gas'])
     print('Gas used (total):   ', txreceipt['gasUsed'])
     print('Gas used (avg/xfer):', txreceipt['gasUsed']/len(to))
 
