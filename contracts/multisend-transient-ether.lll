@@ -13,13 +13,13 @@
 ;;;;
 ;;;; CALLDATA is intended to look as follows:
 ;;;;
-;;;; CODE    | Ntgt   | [(to,amt), (to,amt), ...]
+;;;; CODE    | Nrcpnt | <(to,amt), (to,amt), ...>
 ;;;; (256 B) | (32 B) | (32+32 B) * Ntgt
 ;;;;
 ;;;; where:
 ;;;;
 ;;;; CODE: compiled code (below), padded to a fixed size
-;;;; Ntgt: number of recipients (i.e. array size for both `_to[]` and `_amt[]`)
+;;;; Nrcpnt: number of recipients (i.e. array size for both `_to[]` and `_amt[]`)
 ;;;; (to,amt): recipient address and amount
 
 (seq
@@ -35,7 +35,7 @@
 
   (def '*cd-dataoffset*  64)     ; compiled program will fit in first N bytes
   (def '*cd-Rdataoffset* 160)    ; UGLY: (+ *cd-dataoffset* 32) shortcut
-  (def '*maxgas*         0x1337) ; max gas for each nested call
+  (def '*maxgas*         3000)   ; max gas for each nested call
 
   ;; ==========================================================================
   ;; INIT
@@ -64,8 +64,7 @@
               ;; to
               (calldataload (mload *memloc-scratchpad*))
               ;; amt
-              (calldataload (+ (mload *memloc-scratchpad*)
-                               0x20)))
+              (calldataload (+ (mload *memloc-scratchpad*) 0x20)))
         ;; TODO: don't throw out success/failure result
         ;; FIXME: bounce failed transaction balances back
 
