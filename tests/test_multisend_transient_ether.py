@@ -26,19 +26,27 @@ def test_multisend_transient_ether(chain):
 
     nrecipients_bytes = chain.web3.toBytes(len(to)).rjust(32, b'\0')
 
-    # `to` is already in hex-string, need same for `amt`
+    # `to` is already in hex-string, but 20-bytes, not 32-bytes each
+    to_hexstr = [chain.web3.toHex(
+        chain.web3.toBytes(hexstr=val).rjust(32, b'\0')
+    ) for val in to]
+    # `amt` is in `int`s
     amt_hexstr = [chain.web3.toHex(
         chain.web3.toBytes(val).rjust(32, b'\0')
     ) for val in amt]
 
     # interleave `to` and `amt`, converting to `bytes` in the process
     msdata_bytes = b''.join([chain.web3.toBytes(hexstr=val)
-                             for pair in zip(to, amt_hexstr) for val in pair])
+                             for pair in zip(to_hexstr, amt_hexstr) for val in pair])
 
     # WORKHERE
     txdata_bytes = mscode_bytes + nrecipients_bytes + msdata_bytes
     txdata = chain.web3.toHex(txdata_bytes)
+
     pp(txdata)
+
+    # sloppy data chunk alignment check
+    assert len(txdata_bytes) % 32 == 0
 
     # seed balances so we don't pay for account creation (skews gas use benchmark)
     # TODO: use own multisend! much faster to test than making `nrecipients` blocks
