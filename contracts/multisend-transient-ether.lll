@@ -2,9 +2,25 @@
 ;;;; @title Ether Multisend
 ;;;; @author Noel Maersk <veox>
 
-;;;; Discussion on Reddit:
-;;;; https://www.reddit.com/r/ethereum/comments/7r3q71/
-;;;;         incentivizing_1ton_transaction_batching_to/dsvqanj/
+;;;; In a transient program, both code and data must be passed in the same
+;;;; transaction field (CALLDATA).
+;;;;
+;;;; Execution starts from the beginning of CALLDATA, so code _must_ come
+;;;; first, especially since data can vary in size.
+;;;;
+;;;; Data size checks have been removed for simplicity's sake; so has been
+;;;; the use of 4-byte function selectors, and array formatting.
+;;;;
+;;;; CALLDATA is intended to look as follows:
+;;;;
+;;;; CODE    | Ntgt   | [(to,amt), (to,amt), ...]
+;;;; (256 B) | (32 B) | (32+32 B) * Ntgt
+;;;;
+;;;; where:
+;;;;
+;;;; CODE: compiled code (below), padded to a fixed size
+;;;; Ntgt: number of recipients (i.e. array size for both `_to[]` and `_amt[]`)
+;;;; (to,amt): recipient address and amount
 
 (seq
   (include "./common.lll.inc")
@@ -13,13 +29,13 @@
   ;; MEMORY LAYOUT
 
   (def '*memloc-counter* 0x60)
-  (def '*memloc-to-ptr*  0x80) ; `_to[]` pointer to calldata location
-  (def '*memloc-amt-ptr* 0xa0) ; `_amt[]` pointer to calldata location
 
   ;; ==========================================================================
   ;; CONSTANTS
 
-  (def '*maxgas* 30000)                 ; max gas allowed per message
+  (def '*cd-dataoffset*  64)     ; compiled program will fit in first N bytes
+  (def '*cd-Rdataoffset* 160)    ; UGLY: (+ *cd-dataoffset* 32) shortcut
+  (def '*maxgas*         0x1337) ; max gas for each nested call
 
   ;; ==========================================================================
   ;; INIT
@@ -30,46 +46,28 @@
   ;; CODE
 
   (seq
-    ;; data size must be a multiple of 64 (32+32) bytes
-    (unless (= (% (calldatasize) 64) 0) (revert 0 0))
+    ;; *cd-dataoffset* will contain the number of recipients
+    (mstore *memloc-counter* (calldataload *cd-dataoffset*))
 
-    ;; don't proceed if not enough data for at least one (to,amt) pair
-    ;; magicnum 192: (32+32+32) + (32+32+32), where
-    ;; magicnum (32+32+32): (start_ptr + size + element)
-    (when (< (calldatasize) 192) (revert 0 0))
-
-    ;; in call data, 0x00 contains pointer to `_to[]` data, where the 0th
-    ;; element is its length; 0x20 contains pointer to `_amt[]` data, where
-    ;; the 0th element is also its length; the lengths should be equal
-
-    ;; store pointers to length-elements (for now)
-    (mstore *memloc-to-ptr*  (calldataload 0x00))
-    (mstore *memloc-amt-ptr* (calldataload 0x20))
-
-    ;; `_to[]` and `_amt[]` lengths must match
-    (unless (= (calldataload (mload *memloc-to-ptr*))
-               (calldataload (mload *memloc-amt-ptr*)))
-      (revert 0 0))
-
-    ;; start from the last elements of arrays
-    (mstore *memloc-counter* (calldataload (mload *memloc-to-ptr*)))
-
-    ;; LOOP through arrays in reverse
+    ;; LOOP through "array of tuples" in reverse
     (while
         (mload *memloc-counter*) ;; last processed array member is not 0th
       (seq
-        ;; calculate offset
-        (mstore *memloc-scratchpad* (* (mload *memloc-counter*) 0x20))
+        ;; calculate offset of current (to,amt) element from start of data
+        ;; NOTE use of Rdataoffset instead of simple dataoffset; for some
+        ;; reason the optimiser doesn't pick up on this, preventing the
+        ;; fitting of this program into 64 bytes :/
+        (mstore *memloc-scratchpad* (+ *cd-Rdataoffset*
+                                       (* (mload *memloc-counter*) 0x20)))
 
-        ;; FIXME: bounce failed transaction balances back
-        ;; TODO: perhaps return which ones failed?
         (send *maxgas*
               ;; to
-              (calldataload (+ (mload *memloc-to-ptr*)
-                               (mload *memloc-scratchpad*)))
-              ;; value
-              (calldataload (+ (mload *memloc-amt-ptr*)
-                               (mload *memloc-scratchpad*))))
+              (calldataload (mload *memloc-scratchpad*))
+              ;; amt
+              (calldataload (+ (mload *memloc-scratchpad*)
+                               0x20)))
+        ;; TODO: don't throw out success/failure result
+        ;; FIXME: bounce failed transaction balances back
 
         ;; decrement counter
         (mstore *memloc-counter* (- (mload *memloc-counter*) 1))))
