@@ -29,6 +29,8 @@
   ;; MEMORY LAYOUT
 
   (def '*memloc-counter* 0x60)
+  (def '*memloc-to*      0x80)
+  (def '*memloc-amt*     0xa0)
 
   ;; ==========================================================================
   ;; CONSTANTS
@@ -56,11 +58,14 @@
         (mstore *memloc-scratchpad* (+ (+ (bytecodesize) 0x20)
                                        (* (mload *memloc-counter*) 0x20)))
 
+        (codecopy *memloc-to*     (mload *memloc-scratchpad*)       0x20)
+        (codecopy *memloc-amt* (+ (mload *memloc-scratchpad*) 0x20) 0x20)
+
         (unless (send *gaslim*
                       ;; to
-                      (calldataload (mload *memloc-scratchpad*))
+                      (mload *memloc-to*)
                       ;; amt
-                      (calldataload (+ (mload *memloc-scratchpad*) 0x20)))
+                      (mload *memloc-amt*))
           ;; TODO: don't fail; bounce balance back instead
           (revert 0 0))
 
