@@ -33,8 +33,8 @@
   ;; ==========================================================================
   ;; CONSTANTS
 
-  (def '*cd-dataoffset*  64)     ; compiled program will fit in first N bytes
-  (def '*cd-Rdataoffset* 160)    ; UGLY: (+ *cd-dataoffset* 32) shortcut
+  (def '*cd-dataoffset*  96)     ; compiled program will fit in first N bytes
+  (def '*cd-Rdataoffset* 128)    ; UGLY: (+ *cd-dataoffset* 32) shortcut
   (def '*gaslim*         30000)  ; gas limit for each nested call
 
   ;; ==========================================================================
@@ -60,13 +60,13 @@
         (mstore *memloc-scratchpad* (+ *cd-Rdataoffset*
                                        (* (mload *memloc-counter*) 0x20)))
 
-        (send *gaslim*
-              ;; to
-              (calldataload (mload *memloc-scratchpad*))
-              ;; amt
-              (calldataload (+ (mload *memloc-scratchpad*) 0x20)))
-        ;; TODO: don't throw out success/failure result
-        ;; FIXME: bounce failed transaction balances back
+        (unless (send *gaslim*
+                      ;; to
+                      (calldataload (mload *memloc-scratchpad*))
+                      ;; amt
+                      (calldataload (+ (mload *memloc-scratchpad*) 0x20)))
+          ;; TODO: don't fail; bounce balance back instead
+          (revert 0 0))
 
         ;; decrement counter
         (mstore *memloc-counter* (- (mload *memloc-counter*) 1))))

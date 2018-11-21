@@ -11,9 +11,9 @@ def give_balances(chain, to):
 
 def test_multisend_transient_ether(chain):
     # FIXME: manual copy-paste from `lllc -o -x multisend-transient-ether.lll`
-    mscode = '0x' + '6040356060525b60605115603c5760206060510260a0016040526000806000806020604051013560405135617530f1506001606051036060526006565b00'
+    mscode = '0x' + '6060356060525b606051156043576020606051026080016040526000806000806020604051013560405135617530f1603657600080fd5b6001606051036060526006565b00'
 
-    nrecipients = 10
+    nrecipients = 2
     to = [chain.web3.toHex(
         chain.web3.toBytes(addr).rjust(20, b'\0')
     ) for addr in range(4096, 4096+nrecipients)]
@@ -22,7 +22,7 @@ def test_multisend_transient_ether(chain):
     assert nrecipients == len(to) == len(amt)
 
     # add zeros on the right (i.e. left-align)
-    mscode_bytes = chain.web3.toBytes(hexstr=mscode).ljust(64, b'\0')
+    mscode_bytes = chain.web3.toBytes(hexstr=mscode).ljust(96, b'\0')
 
     nrecipients_bytes = chain.web3.toBytes(len(to)).rjust(32, b'\0')
 
@@ -45,6 +45,8 @@ def test_multisend_transient_ether(chain):
     pp(txdata)
 
     # sloppy data chunk alignment check
+    assert len(mscode_bytes) == 96
+    assert len(nrecipients_bytes) == 32
     assert len(txdata_bytes) % 32 == 0
 
     # seed balances so we don't pay for account creation (skews gas use benchmark)
@@ -69,4 +71,8 @@ def test_multisend_transient_ether(chain):
     print('Gas used (total):   ', txreceipt['gasUsed'])
     print('Gas used (avg/xfer):', txreceipt['gasUsed']/len(to))
 
-    assert chain.web3.eth.getBalance(to[0]) >= amt[0]
+    #assert chain.web3.eth.getBalance(to[0]) >= amt[0]
+    assert chain.web3.eth.getBalance(to[1]) >= amt[1]
+    #assert chain.web3.eth.getBalance(to[-1]) >= amt[-1]
+
+    #assert chain.web3.eth.getBalance('0x'+'00'*20) == 0
