@@ -33,8 +33,6 @@
   ;; ==========================================================================
   ;; CONSTANTS
 
-  (def '*cd-dataoffset*  96)     ; compiled program will fit in first N bytes
-  (def '*cd-Rdataoffset* 128)    ; UGLY: (+ *cd-dataoffset* 32) shortcut
   (def '*gaslim*         30000)  ; gas limit for each nested call
 
   ;; ==========================================================================
@@ -46,18 +44,16 @@
   ;; CODE
 
   (seq
-    ;; *cd-dataoffset* will contain the number of recipients
-    (mstore *memloc-counter* (calldataload *cd-dataoffset*))
+    ;; first word after (bytecodesize) is number of elements - use as counter
+    (codecopy *memloc-counter* (bytecodesize) 0x20)
 
     ;; LOOP through "array of tuples" in reverse
     (while
         (mload *memloc-counter*) ;; last processed array member is not 0th
       (seq
         ;; calculate offset of current (to,amt) element from start of data
-        ;; NOTE use of Rdataoffset instead of simple dataoffset; for some
-        ;; reason the optimiser doesn't pick up on this, preventing the
-        ;; fitting of this program into 64 bytes :/
-        (mstore *memloc-scratchpad* (+ *cd-Rdataoffset*
+        ;; NOTE: first word after (bytecodesize) is number of elements, so skip
+        (mstore *memloc-scratchpad* (+ (+ (bytecodesize) 0x20)
                                        (* (mload *memloc-counter*) 0x20)))
 
         (unless (send *gaslim*
