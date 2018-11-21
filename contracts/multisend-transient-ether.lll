@@ -12,10 +12,11 @@
 ;;;; Data size checks have been removed for simplicity's sake; so has been
 ;;;; the use of 4-byte function selectors.
 ;;;;
-;;;; CALLDATA is intended to look as follows:
+;;;; "Transaction data" is expected to look as follows:
 ;;;;
-;;;; CODE    | Ntgt   | <(to,amt), (to,amt), ...>
-;;;; (X B)   | (32 B) | (32+32 B) * Ntgt
+;;;; CODE                 | Ntgt     | <(to,amt), (to,amt), ...>
+;;;; ---------------------+----------+--------------------------
+;;;; (bytecodesize) bytes | 32 bytes | (32+32)*Ntgt bytes
 ;;;;
 ;;;; where:
 ;;;;
