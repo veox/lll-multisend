@@ -56,7 +56,7 @@
         (mload *memloc-counter*) ;; last processed array member is not 0th
       (seq
         ;; decrement counter
-        (mstore *memloc-counter* (- (mload *memloc-counter*) 1))))
+        (mstore *memloc-counter* (- (mload *memloc-counter*) 1))
         ;; calculate offset of current (to,amt) element from start of data
         ;; NOTE: first word after (bytecodesize) is number of elements, so skip
         (mstore *memloc-scratchpad* (+ (+ (bytecodesize) 0x20)
@@ -72,7 +72,7 @@
                       ;; amt
                       (mload *memloc-amt*))
           ;; TODO: don't fail all; instead, bounce balance back
-          (revert 0 0))
+          (revert 0 0))))
 
     ;; TODO: return success/failure states
     (return 0 0)))

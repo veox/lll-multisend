@@ -11,7 +11,7 @@ def give_balances(chain, to):
 
 def test_multisend_transient_ether(chain):
     # FIXME: manual copy-paste from `lllc -o -x multisend-transient-ether.lll`
-    mscode = '0x' + '6020604b6060395b60605115601b576001606051036060526007565b6040606051026020604b01016040526040805160803960008060008060a051608051617530f1604957600080fd5b00'
+    mscode = '0x' + '6020604b6060395b606051156049576001606051036060526040606051026020604b01016040526040805160803960008060008060a051608051617530f1604557600080fd5b6007565b00'
 
     nrecipients = 2
     to = [chain.web3.toHex(
@@ -72,8 +72,9 @@ def test_multisend_transient_ether(chain):
     print('Gas used (total):   ', txreceipt['gasUsed'])
     print('Gas used (avg/xfer):', txreceipt['gasUsed']/len(to))
 
+    # TODO: check _all_
     assert chain.web3.eth.getBalance(to[0]) >= amt[0]
-    #assert chain.web3.eth.getBalance(to[1]) >= amt[1]
-    #assert chain.web3.eth.getBalance(to[-1]) >= amt[-1]
+    assert chain.web3.eth.getBalance(to[1]) >= amt[1]
+    assert chain.web3.eth.getBalance(to[-1]) >= amt[-1]
 
     #assert chain.web3.eth.getBalance('0x'+'00'*20) == 0
