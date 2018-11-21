@@ -1,26 +1,27 @@
 ;;;; ==========================================================================
-;;;; @title Ether Multisend
+;;;; @title Ether Multisend (Transient variant)
 ;;;; @author Noel Maersk <veox>
 
 ;;;; In a transient program, both code and data must be passed in the same
-;;;; transaction field (CALLDATA).
+;;;; transaction field. Although called "transaction data" when viewed
+;;;; externally, it will be available as code in its entirety during execution.
 ;;;;
-;;;; Execution starts from the beginning of CALLDATA, so code _must_ come
-;;;; first, especially since data can vary in size.
+;;;; Execution starts from the beginning of this blob, so code _must_ come
+;;;; first.
 ;;;;
 ;;;; Data size checks have been removed for simplicity's sake; so has been
-;;;; the use of 4-byte function selectors, and array formatting.
+;;;; the use of 4-byte function selectors.
 ;;;;
 ;;;; CALLDATA is intended to look as follows:
 ;;;;
-;;;; CODE    | Nrcpnt | <(to,amt), (to,amt), ...>
-;;;; (256 B) | (32 B) | (32+32 B) * Ntgt
+;;;; CODE    | Ntgt   | <(to,amt), (to,amt), ...>
+;;;; (X B)   | (32 B) | (32+32 B) * Ntgt
 ;;;;
 ;;;; where:
 ;;;;
-;;;; CODE: compiled code (below), padded to a fixed size
-;;;; Nrcpnt: number of recipients (i.e. array size for both `_to[]` and `_amt[]`)
-;;;; (to,amt): recipient address and amount
+;;;; CODE: compiled code (below)
+;;;; Ntgt: number of recipients (i.e. array size for both `_to[]` and `_amt[]`)
+;;;; (to,amt): recipient address and amount (tuple)
 
 (seq
   (include "./common.lll.inc")
@@ -30,7 +31,7 @@
 
   (def '*memloc-counter* 0x60)
   (def '*memloc-to*      0x80)
-  (def '*memloc-amt*     0xa0)
+  (def '*memloc-amt*     0xa0)   ; code assumes `amt` immediately follows `to`!
 
   ;; ==========================================================================
   ;; CONSTANTS
@@ -47,28 +48,31 @@
 
   (seq
     ;; first word after (bytecodesize) is number of elements - use as counter
+    ;; TODO: make it something smaller - no need for all those 0s
     (codecopy *memloc-counter* (bytecodesize) 0x20)
 
     ;; LOOP through "array of tuples" in reverse
     (while
         (mload *memloc-counter*) ;; last processed array member is not 0th
       (seq
+        ;; decrement counter
+        (mstore *memloc-counter* (- (mload *memloc-counter*) 1))))
         ;; calculate offset of current (to,amt) element from start of data
         ;; NOTE: first word after (bytecodesize) is number of elements, so skip
         (mstore *memloc-scratchpad* (+ (+ (bytecodesize) 0x20)
-                                       (* (mload *memloc-counter*) 0x20)))
+                                       (* (mload *memloc-counter*) 0x40)))
 
-        (codecopy *memloc-to*     (mload *memloc-scratchpad*)       0x20)
-        (codecopy *memloc-amt* (+ (mload *memloc-scratchpad*) 0x20) 0x20)
+        ;; copy (to,amt) at the same time
+        ;; TODO: optimise out, *memloc-scratchpad* used in only one place
+        (codecopy *memloc-to* (mload *memloc-scratchpad*) 0x40)
 
         (unless (send *gaslim*
                       ;; to
                       (mload *memloc-to*)
                       ;; amt
                       (mload *memloc-amt*))
-          ;; TODO: don't fail; bounce balance back instead
+          ;; TODO: don't fail all; instead, bounce balance back
           (revert 0 0))
 
-        ;; decrement counter
-        (mstore *memloc-counter* (- (mload *memloc-counter*) 1))))
+    ;; TODO: return success/failure states
     (return 0 0)))
