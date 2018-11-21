@@ -57,14 +57,15 @@
       (seq
         ;; decrement counter
         (mstore *memloc-counter* (- (mload *memloc-counter*) 1))
-        ;; calculate offset of current (to,amt) element from start of data
-        ;; NOTE: first word after (bytecodesize) is number of elements, so skip
-        (mstore *memloc-scratchpad* (+ (+ (bytecodesize) 0x20)
-                                       (* (mload *memloc-counter*) 0x40)))
 
-        ;; copy (to,amt) at the same time
-        ;; TODO: optimise out, *memloc-scratchpad* used in only one place
-        (codecopy *memloc-to* (mload *memloc-scratchpad*) 0x40)
+        ;; copy (to,amt) - at the same time!
+        (codecopy *memloc-to*
+                  ;; offset of current (to,amt) element from start of data
+                  ;; NOTE: skipping location with number of tuples
+                  (+ (+ (bytecodesize) 0x20)
+                     (* (mload *memloc-counter*) 0x40))
+                  ;; two elements, 0x20-long each
+                  0x40)
 
         (unless (send *gaslim*
                       ;; to
