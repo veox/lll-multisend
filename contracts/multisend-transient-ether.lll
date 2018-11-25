@@ -40,16 +40,11 @@
   (def '*gaslim*         30000)  ; gas limit for each nested call
 
   ;; ==========================================================================
-  ;; INIT
-
-  ;; none!
-
-  ;; ==========================================================================
   ;; CODE
 
   (seq
-    ;; first word after (bytecodesize) is number of elements - use as counter
-    ;; TODO: make it something smaller - no need for all those 0s
+    ;; first WORD after (bytecodesize) is number of elements - use as counter
+    ;; TODO: make it something smaller than WORD?.. no need for all those 0s
     (codecopy *memloc-counter* (bytecodesize) 0x20)
 
     ;; LOOP through "array of tuples" in reverse
@@ -68,11 +63,7 @@
                   ;; two elements, 0x20-long each
                   0x40)
 
-        (unless (send *gaslim*
-                      ;; to
-                      (mload *memloc-to*)
-                      ;; amt
-                      (mload *memloc-amt*))
+        (unless (send *gaslim* (mload *memloc-to*) (mload *memloc-amt*))
           ;; TODO: don't fail all; instead, bounce balance back
           (revert 0 0))))
 
